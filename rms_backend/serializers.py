@@ -28,6 +28,10 @@ class ChangePassword(serializers.Serializer):
             raise serializers.ValidationError(
                 "Password must start with a letter, contain at least one uppercase letter, one lowercase letter, one number, one special character, and be 8-15 characters long."
             )
-
         return value
-    
+    def validate(self,value):
+        if value["New_password"] != value["Confirm_password"]:
+            raise serializers.ValidationError({
+                "Message" : "New password and Confirm password Not matchd plese once check"
+            })
+        return value
