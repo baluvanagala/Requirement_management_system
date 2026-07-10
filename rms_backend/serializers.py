@@ -16,7 +16,7 @@ class LoginSerializer(serializers.Serializer):
         if extra_fields:
             raise serializers.ValidationError(
                 {
-                    "extra_fields": f"{', '.join(extra_fields)} fields are not allowed: "
+                    "extra_fields": "Enter email or either phone number "
                 }
             )
 
