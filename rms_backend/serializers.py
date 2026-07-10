@@ -6,80 +6,75 @@ User = get_user_model()
 
 
 class UserSerializer(serializers.ModelSerializer):
-    """Serializer for the Django User model (nested inside Employee)."""
 
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'first_name', 'last_name']
-        read_only_fields = ['id', 'username']
+        fields = [
+            "id",
+            "username",
+            "email",
+            "first_name",
+            "last_name",
+            "role",
+        ]
 
 
 class EmployeeSerializer(serializers.ModelSerializer):
-    """
-    Full employee serializer.
-    - Shows nested user info (username, email, name).
-    - Used by HR/Manager to view all employees.
-    - Used by Employee to view their own profile.
-    """
 
     user = UserSerializer(read_only=True)
-    role_display = serializers.CharField(source='get_role_display', read_only=True)
 
     class Meta:
         model = Employee
-        fields = [
-            'id', 'user', 'role', 'role_display',
-            'department', 'phone', 'address',
-            'date_of_joining', 'salary',
-        ]
-        read_only_fields = ['id', 'role']  # Only admin can change role
-
-
-class EmployeeUpdateSerializer(serializers.ModelSerializer):
-    """
-    Serializer for employees to update their own profile.
-    They can only edit: phone, address (NOT role, salary, department).
-    """
-
-    class Meta:
-        model = Employee
-        fields = ['phone', 'address']
+        fields = "__all__"
 
 
 class RegisterSerializer(serializers.Serializer):
-    """Serializer for registering a new user + employee profile."""
 
     username = serializers.CharField(max_length=150)
-    password = serializers.CharField(write_only=True, min_length=6)
     email = serializers.EmailField()
-    first_name = serializers.CharField(max_length=30, required=False, default='')
-    last_name = serializers.CharField(max_length=30, required=False, default='')
-    role = serializers.ChoiceField(choices=Employee.ROLE_CHOICES, default='employee')
-    department = serializers.CharField(max_length=100, required=False, default='')
+    password = serializers.CharField(write_only=True, min_length=6)
+    first_name = serializers.CharField(required=False, default="")
+    last_name = serializers.CharField(required=False, default="")
+    role = serializers.ChoiceField(
+        choices=Employee.ROLE_CHOICES,
+        default="employee",
+    )
+    department = serializers.CharField(required=False, default="")
 
     def validate_username(self, value):
         if User.objects.filter(username=value).exists():
-            raise serializers.ValidationError("Username already exists.")
+            raise serializers.ValidationError("A user with this username already exists.")
+        return value
+
+    def validate_email(self, value):
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("A user with this email already exists.")
         return value
 
     def create(self, validated_data):
         user = User.objects.create_user(
-            username=validated_data['username'],
-            password=validated_data['password'],
-            email=validated_data['email'],
-            first_name=validated_data.get('first_name', ''),
-            last_name=validated_data.get('last_name', ''),
+            username=validated_data["username"],
+            email=validated_data["email"],
+            password=validated_data["password"],
+            first_name=validated_data.get("first_name", ""),
+            last_name=validated_data.get("last_name", ""),
+            role=validated_data.get("role", "employee"),
         )
-        # Ensure the user's `role` field (on the custom User) is set
-        try:
-            user.role = validated_data.get('role', 'employee')
-            user.save()
-        except Exception:
-            # If the User model doesn't have a role field, ignore silently
-            pass
+
         employee = Employee.objects.create(
             user=user,
-            role=validated_data.get('role', 'employee'),
-            department=validated_data.get('department', ''),
+            role=validated_data.get("role", "employee"),
+            department=validated_data.get("department", ""),
         )
+
         return employee
+
+    def to_representation(self, instance):
+        """Return user details after registration."""
+        return {
+            "id": instance.user.id,
+            "username": instance.user.username,
+            "email": instance.user.email,
+            "role": instance.role,
+            "department": instance.department,
+        }

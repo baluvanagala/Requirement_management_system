@@ -1,17 +1,14 @@
 from django.urls import path
-from . import views
+from rest_framework_simplejwt.views import (
+    TokenObtainPairView,
+    TokenRefreshView,
+)
+
+from .views import RegisterView, EmployeeListView
 
 urlpatterns = [
-    # Public
-    path('register/', views.RegisterView.as_view(), name='register'),
-
-
-    # HR / Manager → list all employees
-    path('employees/', views.EmployeeListView.as_view(), name='employee-list'),
-
-    # HR / Manager → any employee | Employee → own profile only
-    path('employees/<int:pk>/', views.EmployeeDetailView.as_view(), name='employee-detail'),
-
-    # Any logged-in user → their own profile
-    path('profile/', views.MyProfileView.as_view(), name='my-profile'),
+    path("register/", RegisterView.as_view(), name="register"),
+    path("login/", TokenObtainPairView.as_view(), name="login"),
+    path("refresh/", TokenRefreshView.as_view(), name="token-refresh"),
+    path("employees/", EmployeeListView.as_view(), name="employee-list"),
 ]
