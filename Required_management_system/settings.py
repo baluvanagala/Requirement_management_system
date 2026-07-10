@@ -37,9 +37,15 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    "rest_framework_simplejwt",
     'rest_framework',
     'rms_backend'
 ]
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ),
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -122,11 +128,21 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
-# Email settings for local development
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-DEFAULT_FROM_EMAIL = 'webmaster@localhost'
+# # Email settings for local development
+# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# DEFAULT_FROM_EMAIL = 'webmaster@localhost'
 
-# Default primary key field type
-# https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
+# # Default primary key field type
+# # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+# DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+# __________________________
+# Email Configuration - Using Console Backend for Testing
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+
+
+DEFAULT_FROM_EMAIL = "webmaster@localhost"
+# EMAIL_HOST_PASSWORD="Jana@2005"
+EMAIL_HOST_PASSWORD ="Jana@2005"  # ← Paste your 16-char password here (remove spaces)
+# Password reset token validity (in seconds) - 7 days
+PASSWORD_RESET_TIMEOUT = 7 * 24 * 60 * 60  # 604800 seconds

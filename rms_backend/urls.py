@@ -1,7 +1,9 @@
 from django.urls import path
-from rms_backend.views import Reset_password,Forget_password
+from rms_backend.views import Forgot,Reset_password,Change
+from rest_framework_simplejwt.views import TokenObtainPairView
 urlpatterns = [
-        path('Forget/',Forget_password.as_view()),
-        path('reset_password/',Reset_password.as_view()),
-        
+    path("Forgot/",Forgot.as_view()),
+    path("reset-password/<uidb64>/<token>/",Reset_password.as_view()),
+    path("change_password/",Change.as_view()),
+    path("login/", TokenObtainPairView.as_view()),
 ]

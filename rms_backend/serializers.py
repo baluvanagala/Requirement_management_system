@@ -1,29 +1,33 @@
-import re
 from rest_framework import serializers
+import re
 
-class Reset(serializers.Serializer):
-    New_password = serializers.CharField(
-        min_length=8,
-        max_length=15
-    )
-    Confirm_password = serializers.CharField(
-        min_length=8,
-        max_length=15
-    )
+class ForgotPassword(serializers.Serializer):
+    email = serializers.EmailField()
 
-    def validate(self, attrs):
-        password = attrs.get("New_password")
-        confirm_password = attrs.get("Confirm_password")
+class RestPassword(serializers.Serializer):
+    New_password=serializers.CharField(min_length=8,
+                                       max_length=15,
+                                       write_only=True)
+    Confirm_password=serializers.CharField(min_length=8,
+                                       max_length=15,
+                                       write_only=True)
+    def validate(self,data):
+        if data['New_password'] != data["Confirm_password"]:
+            raise serializers.ValidationError("Password is dose not matched plase once check")
+        return data
 
-        if (
-            password != confirm_password or
-            not re.match(
-                r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@#$%^&+=!])[A-Za-z][A-Za-z\d@#$%^&+=!]{7,14}$',
-                password
-            )
-        ):
+
+class ChangePassword(serializers.Serializer):
+    Old_password=serializers.CharField(write_only=True)
+    New_password=serializers.CharField(write_only=True)
+    Confirm_password=serializers.CharField(write_only=True)
+    def validate_New_password(self, value):
+        pattern = r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@#$%^&+=!])[A-Za-z][A-Za-z\d@#$%^&+=!]{7,14}$'
+
+        if not re.match(pattern, value):
             raise serializers.ValidationError(
-                "Password must match the confirm password, start with a letter, contain at least one uppercase letter, one lowercase letter, one number, one special character, and be 8-15 characters long."
+                "Password must start with a letter, contain at least one uppercase letter, one lowercase letter, one number, one special character, and be 8-15 characters long."
             )
 
-        return attrs
+        return value
+    
