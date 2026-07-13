@@ -2,10 +2,12 @@ from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
-from .serializers import LoginSerializer,LogoutSerializer,ForgotPasswordSerializer
+from .serializers import LoginSerializer,LogoutSerializer
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
-from .models import CustomUser
+from rest_framework.permissions import AllowAny
+from .models import CustomUser, BlacklistedToken
+from datetime import datetime,timezone
+
 
 #######
 from django.utils.http import urlsafe_base64_encode
@@ -34,16 +36,42 @@ class LoginView(APIView):
     
 
 class LogoutView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def post(self, request):
         serializer = LogoutSerializer(data=request.data)
 
         if serializer.is_valid():
-            serializer.blacklist_token()
+            refresh_token = serializer.validated_data["refresh"]
+            token = RefreshToken(refresh_token)
+
+            try:
+                user = CustomUser.objects.get(id=token["user_id"])
+            except CustomUser.DoesNotExist:
+                return Response(
+                    {"message": "Invalid refresh token."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            expires_at = datetime.fromtimestamp(
+                token["exp"],
+                tz=timezone.utc
+            )
+
+            if BlacklistedToken.objects.filter(token=refresh_token).exists():
+                return Response(
+                    {"message": "Token already blacklisted."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            BlacklistedToken.objects.create(
+                user=user,
+                token=refresh_token,
+                expires_at=expires_at
+            )
 
             return Response(
-                {"message": "Logout successful"},
+                {"message": "Logout successful."},
                 status=status.HTTP_200_OK
             )
 
@@ -52,6 +80,7 @@ class LogoutView(APIView):
             status=status.HTTP_400_BAD_REQUEST
         )
 
+    
 # class ForgotPasswordView(APIView):
 
 #     def post(self,request):

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import CustomUser
+from .models import CustomUser,BlacklistedToken
 import re
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
@@ -100,32 +100,56 @@ class LoginSerializer(serializers.Serializer):
 
 
 class LogoutSerializer(serializers.Serializer):
-    refresh=serializers.CharField()
+    refresh = serializers.CharField(
+        required=True,
+        allow_blank=False,
+        trim_whitespace=True
+    )
 
     def validate(self, attrs):
-        refresh_token=attrs.get('refresh')
+        refresh_token = attrs.get("refresh")
 
         if not refresh_token:
             raise serializers.ValidationError(
-                {'refresh':'Refresh token is required.'}
+                {"refresh": "Refresh token is required."}
             )
+
         try:
-            RefreshToken(refresh_token)
+            token = RefreshToken(refresh_token)
+
         except TokenError:
             raise serializers.ValidationError(
-                {
-                    'refresh':'Invalid or expired refresh token.'
-                }
+                {"refresh": "Invalid or expired refresh token."}
             )
-        attrs['refresh']=refresh_token
-        return attrs
-    def blacklist_token(self):
-        try:
-            token=RefreshToken(self.validated_data['refresh'])
-            token.blacklist()
-        except TokenError:
+
+        # Check already blacklisted
+        if BlacklistedToken.objects.filter(
+            token=refresh_token
+        ).exists():
             raise serializers.ValidationError(
-                {'refresh': 'Token is already blacklisted or invalid'}
+                {"refresh": "Token is already blacklisted."}
             )
-        
+
+        attrs["token"] = token
+        return attrs    
+
+
+
+
+
+
+
+
+
+
+
+
+
+# class ForgotPasswordSerializer(serializers.Serializer):
+#     email = serializers.EmailField()
+
+#     def validate_email(self, value):
+#         if not CustomUser.objects.filter(email__iexact=value).exists():
+#             raise serializers.ValidationError("Email is not registered.")
+#         return value
 
