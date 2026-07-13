@@ -78,3 +78,39 @@ class RegisterSerializer(serializers.Serializer):
             "role": instance.role,
             "department": instance.department,
         }
+
+
+
+
+
+       # ---------------- RESET OTP SERIALIZER ----------------
+
+from rest_framework import serializers
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+
+class ResendOTPSerializer(serializers.Serializer):
+    username = serializers.CharField(max_length=150)
+
+    def validate_username(self, value):
+        if not User.objects.filter(username=value).exists():
+            raise serializers.ValidationError("Username does not exist.")
+        return value
+
+
+class GenerateOTPSerializer(serializers.Serializer):
+    """Accepts email + password to authenticate and generate an OTP."""
+    email = serializers.EmailField()
+    password = serializers.CharField(write_only=True)
+
+
+class VerifyOTPSerializer(serializers.Serializer):
+    """Accepts username + otp to verify the OTP."""
+    username = serializers.CharField(max_length=150)
+    otp = serializers.CharField(max_length=6, min_length=6)
+
+    def validate_username(self, value):
+        if not User.objects.filter(username=value).exists():
+            raise serializers.ValidationError("Username does not exist.")
+        return value
