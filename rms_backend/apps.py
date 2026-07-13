@@ -2,4 +2,5 @@ from django.apps import AppConfig
 
 
 class RmsBackendConfig(AppConfig):
-    name = 'rms_backend'
+    default_auto_field = 'django.db.models.BigAutoField'
+    name = 'RMS_backend'

@@ -75,12 +75,12 @@ WSGI_APPLICATION = 'Required_management_system.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'rms_db',
-        'USER':'postgres',
-        'PASSWORD':'1234',
-        'HOST': 'localhost',
-        'PORT': '5432'
+        'ENGINE':'django.db.backends.postgresql',
+        'NAME': 'rmsdb',
+        'PORT':'5432',
+        'HOST':'localhost',
+        'PASSWORD':'mahathi',
+        'USER':'postgres'
     }
 }
 
