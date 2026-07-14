@@ -1,7 +1,9 @@
 from django.urls import path
-from rms_backend.views import Reset_password,Forget_password
+from .views import ForgotPassword, ResetPassword
+
 urlpatterns = [
-        path('Forget/',Forget_password.as_view()),
-        path('reset_password/',Reset_password.as_view()),
-        
+
+    path("Forgot/",ForgotPassword.as_view()),
+    path("reset-password/<uidb64>/<token>/",ResetPassword.as_view()),
+
 ]

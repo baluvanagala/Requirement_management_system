@@ -1,47 +1,66 @@
+from django.contrib.auth import get_user_model
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
 from django.core.mail import send_mail
+from django.conf import settings
+from django.utils.http import urlsafe_base64_decode
 from django.contrib.auth.models import User
-from django.shortcuts import render
+
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND, HTTP_500_INTERNAL_SERVER_ERROR
-from rms_backend.serializers import Reset
+from rest_framework import status
 
-class Forget_password(APIView):
-
+User = get_user_model()
+class ForgotPassword(APIView):
     def post(self, request):
         email = request.data.get("email")
-        if not email:
-            return Response({"message": "Email is required"}, status=HTTP_400_BAD_REQUEST)
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
-            return Response({"message": "Email not found"}, status=HTTP_404_NOT_FOUND)
-        reset_link = "http://127.0.0.1:8000/api/reset_password/"
-        try:
-            send_mail(
-                "Reset Password",
-                f"Click this link to reset your password:\n{reset_link}",
-                None,
-                [email],
-                fail_silently=False,
-            )
-        except Exception as exc:
             return Response(
-                {"message": "Unable to send reset email", "error": str(exc)},
-                status=HTTP_500_INTERNAL_SERVER_ERROR,
+                {"error":"User not found"},
+                status=status.HTTP_404_NOT_FOUND
             )
-        return Response({"message": "Reset link sent successfully"}, status=HTTP_200_OK)
-          
-
-
-class Reset_password(APIView):
-    def post(self, request):
-        serializer = Reset(data=request.data)
-        if serializer.is_valid():
-            serializer.validated_data['New_password']
-            return Response({
-                "message": "Your Password is reset successfull",
-            }, status=HTTP_200_OK)
-        else:
-              return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
-
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+        token = default_token_generator.make_token(user)
+        reset_link = f"http://127.0.0.1:8000/api/reset-password/{uid}/{token}/"
+        send_mail(
+            subject="Reset Password",
+            message=f"Click the link below:\n\n{reset_link}",
+            from_email=settings.EMAIL_HOST_USER,
+            recipient_list=[email],
+            fail_silently=False,
+        )
+        return Response(
+            {"message":"Reset link sent successfully"}
+        )
+    
+    
+class ResetPassword(APIView):
+    def post(self, request, uidb64, token):
+        password = request.data.get("New_password")
+        confirm_password = request.data.get("confirm_password")
+        if password != confirm_password:
+            return Response(
+                {"error":"Passwords do not match"},
+                status=400
+            )
+        try:
+            uid = urlsafe_base64_decode(uidb64).decode()
+            user = User.objects.get(pk=uid)
+        except Exception:
+            return Response(
+                {"error":"Invalid user"},
+                status=400
+            )
+        if not default_token_generator.check_token(user, token):
+            return Response(
+                {"error":"Invalid Token"},
+                status=400
+            )
+        user.set_password(password)
+        user.save()
+        return Response(
+            {"message":"Password Reset Successfully"}
+        )
