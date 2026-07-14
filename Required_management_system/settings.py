@@ -76,7 +76,7 @@ WSGI_APPLICATION = 'Required_management_system.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE':'django.db.backends.postgresql',
-        'NAME': 'rmsdb',
+        'NAME': 'rms',
         'PORT':'5432',
         'HOST':'localhost',
         'PASSWORD':'mahathi',
@@ -125,3 +125,7 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+AUTH_USER_MODEL = 'rms_backend.User'
+
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'

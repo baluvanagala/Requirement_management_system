@@ -25,9 +25,9 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
     def validate_username(self, value):
         if not value:
             return value
-        if len(value) < 3:
+        if len(value) <4:
             raise serializers.ValidationError(
-                "Username must be at least 3 characters."
+                "Username must be at least 4 characters."
             )
 
         if User.objects.filter(username=value).exists():
