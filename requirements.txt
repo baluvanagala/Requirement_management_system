@@ -1,0 +1,11 @@
+Django==5.2.6
+djangorestframework==3.16.1
+djangorestframework-simplejwt==5.5.1
+PyJWT==2.13.0
+psycopg2-binary==2.9.10
+django-rest-passwordreset==1.5.0
+python-decouple==3.8
+twilio==9.8.0
+Pillow==11.3.0
+whitenoise==6.11.0
+gunicorn==23.0.0

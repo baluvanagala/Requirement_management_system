@@ -1,0 +1,9 @@
+.venv312/
+.venv313/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+db.sqlite3
+.env
+profiles/

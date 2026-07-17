@@ -2,16 +2,18 @@ from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
-from .serializers import LoginSerializer,LogoutSerializer,ForgotPasswordSerializer
+from .serializers import LoginSerializer, LogoutSerializer, UserSerializer
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
-from .models import CustomUser
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from .models import CustomUser, BlacklistedToken
+from datetime import datetime, timezone
+
 
 #######
-from django.utils.http import urlsafe_base64_encode
-from django.utils.encoding import force_bytes
-from django.contrib.auth.tokens import default_token_generator
-from django.core.mail import send_mail
+# from django.utils.http import urlsafe_base64_encode
+# from django.utils.encoding import force_bytes
+# from django.contrib.auth.tokens import default_token_generator
+# from django.core.mail import send_mail
 
 # Create your views here.
 
@@ -34,16 +36,42 @@ class LoginView(APIView):
     
 
 class LogoutView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def post(self, request):
         serializer = LogoutSerializer(data=request.data)
 
         if serializer.is_valid():
-            serializer.blacklist_token()
+            refresh_token = serializer.validated_data["refresh"]
+            token = RefreshToken(refresh_token)
+
+            try:
+                user = CustomUser.objects.get(id=token["user_id"])
+            except CustomUser.DoesNotExist:
+                return Response(
+                    {"message": "Invalid refresh token."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            expires_at = datetime.fromtimestamp(
+                token["exp"],
+                tz=timezone.utc
+            )
+
+            if BlacklistedToken.objects.filter(token=refresh_token).exists():
+                return Response(
+                    {"message": "Token already blacklisted."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            BlacklistedToken.objects.create(
+                user=user,
+                token=refresh_token,
+                expires_at=expires_at
+            )
 
             return Response(
-                {"message": "Logout successful"},
+                {"message": "Logout successful."},
                 status=status.HTTP_200_OK
             )
 
@@ -51,34 +79,40 @@ class LogoutView(APIView):
             serializer.errors,
             status=status.HTTP_400_BAD_REQUEST
         )
+    
 
-# class ForgotPasswordView(APIView):
 
-#     def post(self,request):
-#         serializer=ForgotPasswordSerializer(data=request.data)
 
-#         if serializer.is_valid():
-#             email=serializer.validated_data['email']
+class UserAPIView(APIView):
+    permission_classes = [AllowAny]
 
-#             try:
-#                 user=CustomUser.objects.get(email=email)
-#             except CustomUser.DoesNotExist:
-#                 return Response(
-#                     {'email':'Email is not registered.'},status=400
-#                 )
-#             uid=urlsafe_base64_encode(force_bytes(user.pk))
+    def get(self, request, pk=None):
+        if pk:
+            try:
+                user = CustomUser.objects.get(id=pk)
+            except CustomUser.DoesNotExist:
+                return Response(
+                    {"message": "User not found"},
+                    status=status.HTTP_404_NOT_FOUND
+                )
 
-#             token=default_token_generator.make_token(user)
+            serializer = UserSerializer(user)
+            return Response(serializer.data)
 
-#             reset_link=(
-#                 f'http://127:0.0.1:8000/reset-password/{uid}/{token}/'
-#             )
+        users = CustomUser.objects.all()
+        serializer = UserSerializer(users, many=True)
+        return Response(serializer.data)
 
-#             send_mail(
-#                 subject='password Reset',
-#                 message=f'Click the link below: \n\n {reset_link}',
-#                 from_email='baluvanagala66@gmail.com',
-#                 recipient_list=[mail]
+    def post(self, request):
+        serializer = UserSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
 
-#             )
-
+        return Response(
+            {
+                "message": "User created successfully",
+                "data": UserSerializer(user).data,
+            },
+            status=status.HTTP_201_CREATED,
+        )
+    
