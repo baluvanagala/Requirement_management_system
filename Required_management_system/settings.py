@@ -93,23 +93,15 @@ WSGI_APPLICATION = "Required_management_system.wsgi.application"
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 DATABASES = {
-<<<<<<< HEAD
-    "default": {
+        "default": {
         "ENGINE": "django.db.backends.postgresql",
         "NAME": os.getenv("DB_NAME"),
         "USER": os.getenv("DB_USER"),
         "PASSWORD": os.getenv("DB_PASSWORD"),
         "HOST": os.getenv("DB_HOST"),
         "PORT": os.getenv("DB_PORT"),
-=======
-    'default': {
-        'ENGINE':'django.db.backends.postgresql',
-        'NAME': 'rms',
-        'PORT':'5432',
-        'HOST':'localhost',
-        'PASSWORD':'mahathi',
-        'USER':'postgres'
->>>>>>> register_api
+
+
     }
 }
 
@@ -153,7 +145,7 @@ STATIC_URL = "static/"
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
-<<<<<<< HEAD
+
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
@@ -190,19 +182,19 @@ LOGGING = {
 # EMAIL_PORT = 587
 # EMAIL_USE_TLS = True
 
-# EMAIL_HOST_USER = 'baluvanagala66@gmail.com'
+# EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
 
-# EMAIL_HOST_PASSWORD = '' #gmail
+# EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD') #gmail
 
 # DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
-# # import os
+# import os
 
-# # EMAIL_HOST_PASSWORD = os.getenv('')
-=======
+# EMAIL_HOST_PASSWORD = os.getenv('')
+
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = 'rms_backend.User'
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
->>>>>>> register_api
+
